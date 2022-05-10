@@ -30,36 +30,6 @@ func Get() {
 }
 ```
 
-- GET
-```go
-package test
-
-import (
-	"fmt"
-	"github.com/nanchengyimeng/ghttp"
-)
-
-func Get() {
-	builder := ghttp.NewClientBuilder()
-	client, err := builder.Build()
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	requestUrl := "http://test.com/debug/tt/tt"
-	params := make(map[string]string)
-	params["name"] = "test"
-	params["age"] = "18"
-	requestUrl = ghttp.GGet(requestUrl, params)
-	response := client.Get(requestUrl)
-
-	fmt.Println(response.StatusCode())
-	fmt.Println(response.Error())
-	fmt.Println(string(response.Content()))
-}
-```
-
 - 异步get请求示例
 
 ```go
