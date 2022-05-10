@@ -1,10 +1,10 @@
 package ghttp
 
 import (
-"bytes"
-"io"
-"io/ioutil"
-"mime/multipart"
+	"bytes"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
 )
 
 type MultipartDataType int8
@@ -144,4 +144,3 @@ func (m *MultipartBuilder) Builder() (*EasyMultipart, error) {
 		contentType: mulWriter.FormDataContentType(),
 	}, nil
 }
-

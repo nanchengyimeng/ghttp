@@ -33,8 +33,7 @@ type IResponse interface {
 	Cookie(name string) *http.Cookie
 }
 
-
-type HttpResponse struct{
+type HttpResponse struct {
 	err             error
 	ResponseContent []byte
 	httpResp        *http.Response
@@ -88,7 +87,6 @@ func (h *HttpResponse) Cookie(name string) *http.Cookie {
 	}
 	return nil
 }
-
 
 //默认的HTTP响应构造器
 func DefaultBuildResponse(resp *http.Response, err error) IResponse {

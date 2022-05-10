@@ -1,15 +1,15 @@
 package ghttp
 
 import (
-"crypto/tls"
-"crypto/x509"
-"errors"
-"fmt"
-"io/ioutil"
-"net/http"
-"net/http/cookiejar"
-"net/url"
-"time"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"time"
 )
 
 //初始化 clientBuilder
@@ -20,7 +20,6 @@ func NewClientBuilder() *clientBuilder {
 		buildResponse: DefaultBuildResponse,
 	}
 }
-
 
 type clientBuilder struct {
 
@@ -184,4 +183,3 @@ func (builder *clientBuilder) Build() (*Client, error) {
 	}
 	return c, nil
 }
-
