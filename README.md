@@ -1,5 +1,3 @@
-- 小白练手所写
-
 - GET
 ```go
 package test
