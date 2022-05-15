@@ -1,4 +1,5 @@
 - GET
+
 ```go
 package test
 
@@ -31,6 +32,7 @@ func Get() {
 - 异步get请求示例
 
 ```go
+
 package main
 
 import (
@@ -42,7 +44,7 @@ import (
 func main() {
 	requestUrl := "http://test.com/debug/tt/tt"
 	params := make(map[string]string)
-	params["name"] = "lgz"
+	params["name"] = "tt"
 	params["age"] = "18"
 
 	builder := ghttp.NewClientBuilder()
@@ -56,13 +58,16 @@ func main() {
 	getUrl := ghttp.GGet(requestUrl, params)
 
 	tt := &Test{
-		ErrChan: make(chan error, 1),
+		ErrChan:    make(chan error, 1),
 		ResultChan: make(chan []byte, 1000),
+		MaxRequest: make(chan interface{}, 3),
 	}
 
 	//发起十次异步请求
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		tt.TWg.Add(1)
+		tt.MaxRequest <- i
+
 		err = client.GetAsyncWithCallback(getUrl, tt)
 		if err != nil {
 			panic(err.Error())
@@ -71,29 +76,37 @@ func main() {
 
 	fmt.Println("等待响应中")
 	tt.TWg.Wait()
+
+	close(tt.ErrChan)
+	close(tt.ResultChan)
+	close(tt.MaxRequest)
+
 	fmt.Println("响应等待完毕")
 
 	for data := range tt.ResultChan {
 		fmt.Println(string(data))
 	}
-	
+
 }
 
-type Test struct{
-	ErrChan chan error
-	ResultChan chan []byte
-
-	TWg sync.WaitGroup
+type Test struct {
+	ErrChan    chan error       //接收错误信息
+	ResultChan chan []byte      //接收请求结果
+	MaxRequest chan interface{} //限制最大并发请求数
+	TWg        sync.WaitGroup
 }
 
 func (t *Test) ResponseCallback(response ghttp.IResponse) {
 	defer t.TWg.Done()
 	if response.Error() != nil {
-		t.ErrChan<- response.Error()
+		t.ErrChan <- response.Error()
 		return
 	}
 
-	t.ResultChan<- response.Content()
+	t.ResultChan <- response.Content()
+
+	<-t.MaxRequest //限制最大并发请求数
 }
+
 
 ```
