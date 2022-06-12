@@ -5,10 +5,12 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"time"
 )
 
@@ -18,6 +20,7 @@ func NewClientBuilder() *clientBuilder {
 		skipVerify:    true,
 		openJar:       false,
 		buildResponse: DefaultBuildResponse,
+		loggerWriter:  os.Stdout,
 	}
 }
 
@@ -57,6 +60,9 @@ type clientBuilder struct {
 	//处理HTTP的 response的回调函数
 	//默认使用 `response.go`中的 `BuildResponse` 函数
 	buildResponse BuildResponse
+
+	//日志写入io, 默认stdout
+	loggerWriter io.Writer
 }
 
 func (builder *clientBuilder) SetTimeOut(t time.Duration) *clientBuilder {
@@ -107,6 +113,11 @@ func (builder *clientBuilder) Jar(options *cookiejar.Options) *clientBuilder {
 
 func (builder *clientBuilder) BuildResponse(build BuildResponse) *clientBuilder {
 	builder.buildResponse = build
+	return builder
+}
+
+func (builder *clientBuilder) SetLoggerWriter(writer io.Writer) *clientBuilder {
+	builder.loggerWriter = writer
 	return builder
 }
 
@@ -172,6 +183,7 @@ func (builder *clientBuilder) Build() (*Client, error) {
 		header:        builder.header,
 		cookies:       builder.cookie,
 		buildResponse: builder.buildResponse,
+		loggerWriter:  builder.loggerWriter,
 	}
 
 	if builder.openJar {

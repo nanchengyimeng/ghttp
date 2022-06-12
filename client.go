@@ -33,6 +33,9 @@ type Client struct {
 
 	//处理HTTP响应的Response
 	buildResponse BuildResponse
+
+	//加载日志处理
+	loggerWriter io.Writer
 }
 
 //临时header设置，仅本次请求生效
