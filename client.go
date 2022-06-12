@@ -2,10 +2,12 @@ package ghttp
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -105,8 +107,9 @@ func (c *Client) getRequest(method, url string, body io.Reader) (*http.Request, 
 }
 
 //封装http请求
-func (c *Client) doRequest(r *http.Request) (*http.Response, error) {
-	return c.client.Do(r)
+func (c *Client) doRequest(ctx context.Context, r *http.Request) (context.Context, *http.Response, error) {
+	response, err := c.client.Do(r)
+	return ctx, response, err
 }
 
 //POST请求中,处理request的函数
@@ -125,20 +128,20 @@ func setRequestPostXml(r *http.Request) {
 }
 
 //常规发起http请求
-func (c *Client) sendWithMethod(method, url string, body io.Reader, setContentType ContentTypeFunc) IResponse {
+func (c *Client) sendWithMethod(ctx context.Context, method, url string, body io.Reader, setContentType ContentTypeFunc) IResponse {
 	request, err := c.getRequest(method, url, body)
 	if err != nil {
-		return c.buildResponse(nil, err)
+		return c.logger(c.buildResponse(nil, nil, err))
 	}
 	if setContentType != nil {
 		setContentType(request)
 	}
 
-	return c.buildResponse(c.doRequest(request))
+	return c.logger(c.buildResponse(c.doRequest(ctx, request)))
 }
 
 //发起异步回调处理的请求
-func (c *Client) sendWithMethodCallback(method, url string, body io.Reader, setContentType ContentTypeFunc, callback func(response IResponse)) error {
+func (c *Client) sendWithMethodCallback(ctx context.Context, method, url string, body io.Reader, setContentType ContentTypeFunc, callback func(response IResponse)) error {
 	request, err := c.getRequest(method, url, body)
 	if err != nil {
 		return err
@@ -148,19 +151,19 @@ func (c *Client) sendWithMethodCallback(method, url string, body io.Reader, setC
 	}
 
 	go func() {
-		callback(c.buildResponse(c.doRequest(request)))
+		callback(c.logger(c.buildResponse(c.doRequest(ctx, request))))
 	}()
 	return nil
 }
 
 //通用GET请求，可先使用GGET绑定参数，再调用此方法
 func (c *Client) Get(url string) IResponse {
-	return c.sendWithMethod(http.MethodGet, url, nil, nil)
+	return c.sendWithMethod(nil, http.MethodGet, url, nil, nil)
 }
 
 //GET异步请求，使用回调函数
 func (c *Client) GetAsync(url string, call func(response IResponse)) error {
-	return c.sendWithMethodCallback(http.MethodGet, url, nil, nil, call)
+	return c.sendWithMethodCallback(nil, http.MethodGet, url, nil, nil, call)
 }
 
 //GET异步请求，使用回调接口
@@ -171,10 +174,16 @@ func (c *Client) GetAsyncWithCallback(url string, call ICallBack) error {
 //post 的form请求
 func (c *Client) PostForm(url string, values url.Values) IResponse {
 	var reader io.Reader
+	var ctx context.Context
+
+	ctx = nil
+
 	if values != nil {
 		reader = strings.NewReader(values.Encode())
+		ctx = c.buildContext(values.Encode())
 	}
-	return c.sendWithMethod(http.MethodPost, url, reader, setRequestPostFrom)
+
+	return c.sendWithMethod(ctx, http.MethodPost, url, reader, setRequestPostFrom)
 }
 
 //Post form 异步请求,使用回调函数
@@ -182,11 +191,14 @@ func (c *Client) PostFormAsyn(url string, values url.Values, call func(response 
 	if call == nil {
 		return errors.New("callback function is nil")
 	}
+
 	if values == nil {
 		return errors.New("values is nil")
 	}
+
 	reader := strings.NewReader(values.Encode())
-	return c.sendWithMethodCallback(http.MethodPost, url, reader, setRequestPostFrom, call)
+	ctx := c.buildContext(values.Encode())
+	return c.sendWithMethodCallback(ctx, http.MethodPost, url, reader, setRequestPostFrom, call)
 }
 
 //Post form 异步请求,使用接口回调
@@ -197,10 +209,11 @@ func (c *Client) PostFormAsynWithCallback(url string, values url.Values, call IC
 //post 的bytes请求
 func (c *Client) PostBytes(url string, value []byte, req func(request *http.Request)) IResponse {
 	if value == nil {
-		return c.buildResponse(nil, errors.New("PostBytes value is nil"))
+		return c.logger(c.buildResponse(nil, nil, errors.New("PostBytes value is nil")))
 	}
 	reader := bytes.NewReader(value)
-	return c.sendWithMethod(http.MethodPost, url, reader, req)
+	ctx := c.buildContext(string(value))
+	return c.sendWithMethod(ctx, http.MethodPost, url, reader, req)
 }
 
 //post 的bytes请求
@@ -208,21 +221,24 @@ func (c *Client) PostBytesAsyn(url string, value []byte, req func(request *http.
 	if call == nil {
 		return errors.New("callback function is nil")
 	}
+
 	if value == nil {
 		return errors.New("value is nil")
 	}
+
 	reader := bytes.NewReader(value)
-	return c.sendWithMethodCallback(http.MethodPost, url, reader, req, call)
+	ctx := c.buildContext(string(value))
+	return c.sendWithMethodCallback(ctx, http.MethodPost, url, reader, req, call)
 }
 
 //post 的json请求
 func (c *Client) PostJson(url string, value interface{}) IResponse {
 	if value == nil {
-		return c.buildResponse(nil, errors.New("PostJson value is nil"))
+		return c.logger(c.buildResponse(nil, nil, errors.New("PostJson value is nil")))
 	}
 	by, err := json.Marshal(value)
 	if err != nil {
-		return c.buildResponse(nil, err)
+		return c.logger(c.buildResponse(nil, nil, err))
 	}
 	return c.PostBytes(url, by, setRequestPostJson)
 }
@@ -250,11 +266,11 @@ func (c *Client) PostJsonAsynWithCallback(url string, values interface{}, call I
 //post 的xml请求
 func (c *Client) PostXml(url string, value interface{}) IResponse {
 	if value == nil {
-		return c.buildResponse(nil, errors.New("PostJson value is nil"))
+		return c.logger(c.buildResponse(nil, nil, errors.New("PostJson value is nil")))
 	}
 	by, err := xml.Marshal(value)
 	if err != nil {
-		return c.buildResponse(nil, err)
+		return c.logger(c.buildResponse(nil, nil, err))
 	}
 	return c.PostBytes(url, by, setRequestPostXml)
 }
@@ -281,7 +297,7 @@ func (c *Client) PostXmlAsynWithCallback(url string, values interface{}, call IC
 
 //post 的multipart请求
 func (c *Client) PostMultipart(url string, body IMultipart) IResponse {
-	return c.sendWithMethod(http.MethodPost, url, body, func(request *http.Request) {
+	return c.sendWithMethod(nil, http.MethodPost, url, body, func(request *http.Request) {
 		request.Header.Set("Content-Type", body.ContentType())
 	})
 }
@@ -291,7 +307,7 @@ func (c *Client) PostMultipartAsyn(url string, body IMultipart, call func(respon
 	if call == nil {
 		return errors.New("callback function is nil")
 	}
-	return c.sendWithMethodCallback(http.MethodPost, url, body, func(request *http.Request) {
+	return c.sendWithMethodCallback(nil, http.MethodPost, url, body, func(request *http.Request) {
 		request.Header.Set("Content-Type", body.ContentType())
 	}, call)
 }
@@ -299,4 +315,30 @@ func (c *Client) PostMultipartAsyn(url string, body IMultipart, call func(respon
 //post 的multipart请求,使用接口回调
 func (c *Client) PostMultipartAsynWithCallback(url string, body IMultipart, call ICallBack) error {
 	return c.PostMultipartAsyn(url, body, call.ResponseCallback)
+}
+
+//设置请求上下文，用于日志记录
+func (c *Client) buildContext(body string) context.Context {
+	ctx := context.Background()
+	return context.WithValue(ctx, "body", body)
+}
+
+// log记录
+func (c *Client) logger(ctx context.Context, resp IResponse) IResponse {
+	logger := log.New(c.loggerWriter, "curl   ", log.LstdFlags)
+
+	header, _ := json.Marshal(resp.Request().Header)
+	if ctx == nil {
+		logger.Printf("%s    %s    header:%s    params:%s    response:%s", resp.Request().Method, resp.Request().URL, string(header), "", string(resp.Content()))
+		return resp
+	}
+
+	body := ctx.Value("body")
+	var bodyStr string
+	if body != nil {
+		bodyStr = body.(string)
+	}
+
+	logger.Printf("%s    %s    header:%s    params:%s    response:%s", resp.Request().Method, resp.Request().URL, string(header), bodyStr, string(resp.Content()))
+	return resp
 }

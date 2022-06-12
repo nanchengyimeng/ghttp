@@ -1,11 +1,12 @@
 package ghttp
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 )
 
-type BuildResponse func(resp *http.Response, err error) IResponse
+type BuildResponse func(ctx context.Context, resp *http.Response, err error) (context.Context, IResponse)
 
 type IResponse interface {
 	//返回当前请求的错误
@@ -89,21 +90,21 @@ func (h *HttpResponse) Cookie(name string) *http.Cookie {
 }
 
 //默认的HTTP响应构造器
-func DefaultBuildResponse(resp *http.Response, err error) IResponse {
+func DefaultBuildResponse(ctx context.Context, resp *http.Response, err error) (context.Context, IResponse) {
 	iResponse := new(HttpResponse)
 	if err != nil {
 		iResponse.err = err
-		return iResponse
+		return ctx, iResponse
 	}
 
 	iResponse.httpResp = resp
 	responseContent, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		iResponse.err = err
-		return iResponse
+		return ctx, iResponse
 	}
 	iResponse.ResponseContent = responseContent
 	_ = resp.Body.Close()
 
-	return iResponse
+	return ctx, iResponse
 }
