@@ -38,6 +38,9 @@ type client struct {
 
 	//加载日志处理
 	loggerWriter io.Writer
+
+	// 日志开关
+	openLogger bool
 }
 
 //临时header设置，仅本次请求生效
@@ -336,6 +339,11 @@ func (c *client) buildStartTime(ctx context.Context) context.Context {
 
 // log记录
 func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
+	// 日志关闭不记录
+	if !c.openLogger {
+		return resp
+	}
+
 	logger := log.New(c.loggerWriter, "curl   ", log.LstdFlags)
 	startTime := ctx.Value("startTime").(int64)
 	passTime := time.Now().UnixNano() - startTime
