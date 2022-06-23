@@ -60,7 +60,7 @@ func GGet(strUrl string, values map[string]string) string {
 	return buf.String()
 }
 
-//构造一个简单的POST body,
+//构造一个简单的POST body
 func GPostData(values map[string]string) url.Values {
 	if values == nil {
 		return nil

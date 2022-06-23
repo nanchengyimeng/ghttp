@@ -38,6 +38,7 @@ type ClientBuilder struct {
 
 	//cert root 证书
 	certPool []string
+
 	//是否跳过HTTPS证书校验(默认跳过)
 	skipVerify bool
 
