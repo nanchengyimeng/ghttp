@@ -38,6 +38,9 @@ type client struct {
 
 	//加载日志处理
 	loggerWriter io.Writer
+
+	// 日志开关
+	openLogger bool
 }
 
 //临时header设置，仅本次请求生效
@@ -108,6 +111,8 @@ func (c *client) getRequest(method, url string, body io.Reader) (*http.Request, 
 
 //封装http请求
 func (c *client) doRequest(ctx context.Context, r *http.Request) (context.Context, *http.Response, error) {
+	// 记录请求开始时间
+	ctx = c.buildStartTime(ctx)
 	response, err := c.client.Do(r)
 	return ctx, response, err
 }
@@ -323,13 +328,29 @@ func (c *client) buildContext(body string) context.Context {
 	return context.WithValue(ctx, "body", body)
 }
 
+//设置请求时间到ctx
+func (c *client) buildStartTime(ctx context.Context) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	startTime := time.Now().UnixNano()
+	return context.WithValue(ctx, "startTime", startTime)
+}
+
 // log记录
 func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
+	// 日志关闭不记录
+	if !c.openLogger {
+		return resp
+	}
+
 	logger := log.New(c.loggerWriter, "curl   ", log.LstdFlags)
+	startTime := ctx.Value("startTime").(int64)
+	passTime := time.Now().UnixNano() - startTime
 
 	header, _ := json.Marshal(resp.Request().Header)
 	if ctx == nil {
-		logger.Printf("%s    %s    header:%s    params:%s    response:%s", resp.Request().Method, resp.Request().URL, string(header), "", string(resp.Content()))
+		logger.Printf("\t%f\t%s    %s    header:%s    params:%s    response:%s", float32(passTime)/1e6, resp.Request().Method, resp.Request().URL, string(header), "", string(resp.Content()))
 		return resp
 	}
 
@@ -339,6 +360,6 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 		bodyStr = body.(string)
 	}
 
-	logger.Printf("%s    %s    header:%s    params:%s    response:%s", resp.Request().Method, resp.Request().URL, string(header), bodyStr, string(resp.Content()))
+	logger.Printf("\t%f\t%s    %s    header:%s    params:%s    response:%s", float32(passTime)/1e6, resp.Request().Method, resp.Request().URL, string(header), bodyStr, string(resp.Content()))
 	return resp
 }

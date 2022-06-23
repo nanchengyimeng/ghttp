@@ -21,6 +21,7 @@ func NewClientBuilder() *ClientBuilder {
 		openJar:       false,
 		buildResponse: DefaultBuildResponse,
 		loggerWriter:  os.Stdout,
+		openLogger:    true,
 	}
 }
 
@@ -63,6 +64,9 @@ type ClientBuilder struct {
 
 	//日志写入io, 默认stdout
 	loggerWriter io.Writer
+
+	// 日志开关
+	openLogger bool
 }
 
 func (builder *ClientBuilder) SetTimeOut(t time.Duration) *ClientBuilder {
@@ -118,6 +122,11 @@ func (builder *ClientBuilder) BuildResponse(build BuildResponse) *ClientBuilder 
 
 func (builder *ClientBuilder) SetLoggerWriter(writer io.Writer) *ClientBuilder {
 	builder.loggerWriter = writer
+	return builder
+}
+
+func (builder *ClientBuilder) SetLoggerOpen(open bool) *ClientBuilder {
+	builder.openLogger = open
 	return builder
 }
 
@@ -184,6 +193,7 @@ func (builder *ClientBuilder) Build() (*client, error) {
 		cookies:       builder.cookie,
 		buildResponse: builder.buildResponse,
 		loggerWriter:  builder.loggerWriter,
+		openLogger:    builder.openLogger,
 	}
 
 	if builder.openJar {
