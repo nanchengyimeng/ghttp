@@ -185,12 +185,12 @@ func (t *MyResponse) ResponseCallback(response ghttp.IResponse) {
 	t.ResultChan <- response.Content()
 }
 
-// Wait 阻塞等待当前请求
+// RequestWait 阻塞等待当前请求
 func (t *MyResponse) RequestWait() {
 	t.MaxRequest <- struct{}{}
 }
 
-// Done 阻塞等待当前请求
+// RequestDone 释放当前请求的占用
 func (t *MyResponse) RequestDone() {
 	<-t.MaxRequest
 }
