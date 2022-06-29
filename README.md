@@ -187,6 +187,10 @@ type MyResponse struct {
 	TWg        sync.WaitGroup
 }
 
+//这个自定义的MyResponse，甚至可以不包含任何字段，只拥有ResponseCallback方法即可
+//type NanCheng struct {}
+//func (t *NanCheng) ResponseCallback(response ghttp.IResponse)
+
 // ResponseCallback http响应的具体处理函数
 func (t *MyResponse) ResponseCallback(response ghttp.IResponse) {
 	//程序结束时，告知waitGroup结束
