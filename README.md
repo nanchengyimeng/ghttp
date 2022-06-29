@@ -12,6 +12,8 @@
 
 > 构造器用来生成一个client，此外，构造器在生成client时，允许设置一些常规参数。我来举个栗子 ^-^。
 
+> 构造器对应的设置，针对生成的client时始终有效的
+
 1. 首先你需要得到一个构造器，然后才可以设置基准参数
 
 ```go
@@ -48,6 +50,17 @@ builder.SetTimeOut(10 * time.Second)
 //设置请求代理 
 builder.SetProxyUrl("代理服务器地址")
 ```
+
+4. 获取一个client
+
+> Build方法返回一个client，client的描述看 Client的用法
+
+> 如果存在以上可选设置，如超时时间等，会在build时设置到client中，b
+
+```go
+builder.Build()
+```
+### Client的用法
 
 
 -------
@@ -128,7 +141,7 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
-	//使用GPostData方法，设置Get请求的参数
+	//使用GPostData方法，设置PostForm请求的参数
 	data := ghttp.GPostData(params)
 
 	//使用Wg确保异步函数正确结束
