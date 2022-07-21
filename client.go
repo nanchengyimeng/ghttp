@@ -41,6 +41,9 @@ type client struct {
 
 	// 日志开关
 	openLogger bool
+
+	// 请求唯一id
+	uniqueId string
 }
 
 //临时header设置，仅本次请求生效
@@ -77,6 +80,11 @@ func (c *client) AddCookies(cookies []*http.Cookie) {
 //重设cookie，全生命周期有效
 func (c *client) SetCookies(cookies []*http.Cookie) {
 	c.cookies = cookies
+}
+
+// 设置请求的uniqueId
+func (c *client) SetUniqueId(id string) {
+	c.uniqueId = id
 }
 
 //初始化一个request
@@ -350,7 +358,7 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 
 	header, _ := json.Marshal(resp.Request().Header)
 	if ctx == nil {
-		logger.Printf("\t%f\t%s    %s    header:%s    params:%s    response:%s", float32(passTime)/1e6, resp.Request().Method, resp.Request().URL, string(header), "", string(resp.Content()))
+		logger.Printf("\t%f\t%s\t%s\t%s\theader:%s\tparams:%s\tresponse:%s", float32(passTime)/1e6, c.uniqueId, resp.Request().Method, resp.Request().URL, string(header), "", string(resp.Content()))
 		return resp
 	}
 
@@ -360,6 +368,6 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 		bodyStr = body.(string)
 	}
 
-	logger.Printf("\t%f\t%s    %s    header:%s    params:%s    response:%s", float32(passTime)/1e6, resp.Request().Method, resp.Request().URL, string(header), bodyStr, string(resp.Content()))
+	logger.Printf("\t%f\t%s\t%s\t%s\theader:%s\tparams:%s\tresponse:%s", float32(passTime)/1e6, c.uniqueId, resp.Request().Method, resp.Request().URL, string(header), bodyStr, string(resp.Content()))
 	return resp
 }
