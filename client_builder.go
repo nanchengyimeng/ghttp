@@ -15,8 +15,8 @@ import (
 )
 
 //初始化 ClientBuilder
-func NewClientBuilder() *ClientBuilder {
-	return &ClientBuilder{
+func NewClientBuilder() *clientBuilder {
+	return &clientBuilder{
 		skipVerify:    true,
 		openJar:       false,
 		buildResponse: DefaultBuildResponse,
@@ -25,7 +25,7 @@ func NewClientBuilder() *ClientBuilder {
 	}
 }
 
-type ClientBuilder struct {
+type clientBuilder struct {
 
 	//超时时间
 	timeOut time.Duration
@@ -70,69 +70,69 @@ type ClientBuilder struct {
 	openLogger bool
 }
 
-func (builder *ClientBuilder) SetTimeOut(t time.Duration) *ClientBuilder {
+func (builder *clientBuilder) SetTimeOut(t time.Duration) *clientBuilder {
 	builder.timeOut = t
 	return builder
 }
 
-func (builder *ClientBuilder) SetProxyUrl(u string) *ClientBuilder {
+func (builder *clientBuilder) SetProxyUrl(u string) *clientBuilder {
 	builder.proxy = u
 	return builder
 }
 
-func (builder *ClientBuilder) SetTls(tlsPath []*TlsPath) *ClientBuilder {
+func (builder *clientBuilder) SetTls(tlsPath []*TlsPath) *clientBuilder {
 	builder.tlsPath = tlsPath
 	return builder
 }
 
-func (builder *ClientBuilder) SetCert(cert []string) *ClientBuilder {
+func (builder *clientBuilder) SetCert(cert []string) *clientBuilder {
 	builder.certPool = cert
 	return builder
 }
 
-func (builder *ClientBuilder) SkipVerify(skip bool) *ClientBuilder {
+func (builder *clientBuilder) SkipVerify(skip bool) *clientBuilder {
 	builder.skipVerify = skip
 	return builder
 }
 
-func (builder *ClientBuilder) SetCookie(cookie []*http.Cookie) *ClientBuilder {
+func (builder *clientBuilder) SetCookie(cookie []*http.Cookie) *clientBuilder {
 	builder.cookie = cookie
 	return builder
 }
 
-func (builder *ClientBuilder) CheckRedirect(checkRedirect CheckRedirect) *ClientBuilder {
+func (builder *clientBuilder) CheckRedirect(checkRedirect CheckRedirect) *clientBuilder {
 	builder.checkRedirect = checkRedirect
 	return builder
 }
 
-func (builder *ClientBuilder) SetHeader(header map[string]string) *ClientBuilder {
+func (builder *clientBuilder) SetHeader(header map[string]string) *clientBuilder {
 	builder.header = header
 	return builder
 }
 
-func (builder *ClientBuilder) Jar(options *cookiejar.Options) *ClientBuilder {
+func (builder *clientBuilder) Jar(options *cookiejar.Options) *clientBuilder {
 	builder.openJar = true
 	builder.jarOptions = options
 	return builder
 }
 
-func (builder *ClientBuilder) BuildResponse(build BuildResponse) *ClientBuilder {
+func (builder *clientBuilder) BuildResponse(build BuildResponse) *clientBuilder {
 	builder.buildResponse = build
 	return builder
 }
 
-func (builder *ClientBuilder) SetLoggerWriter(writer io.Writer) *ClientBuilder {
+func (builder *clientBuilder) SetLoggerWriter(writer io.Writer) *clientBuilder {
 	builder.loggerWriter = writer
 	return builder
 }
 
-func (builder *ClientBuilder) SetLoggerOpen(open bool) *ClientBuilder {
+func (builder *clientBuilder) SetLoggerOpen(open bool) *clientBuilder {
 	builder.openLogger = open
 	return builder
 }
 
 //构造 client
-func (builder *ClientBuilder) Build() (*client, error) {
+func (builder *clientBuilder) Build() (*client, error) {
 	var (
 		err         error
 		proxy       *url.URL
