@@ -63,6 +63,8 @@ type ClientBuilder struct {
 	//默认使用 `response.go`中的 `BuildResponse` 函数
 	buildResponse BuildResponse
 
+	//日志写入路径, 默认不存在，走stdout
+	logFilePath string
 	//日志写入io, 默认stdout
 	loggerWriter io.Writer
 
@@ -126,8 +128,15 @@ func (builder *ClientBuilder) SetLoggerWriter(writer io.Writer) *ClientBuilder {
 	return builder
 }
 
-func (builder *ClientBuilder) SetLoggerOpen(open bool) *ClientBuilder {
-	builder.openLogger = open
+// 关闭日志输出
+func (builder *ClientBuilder) SetLogFilePath(path string) *ClientBuilder {
+	builder.logFilePath = path
+	return builder
+}
+
+// 关闭日志输出
+func (builder *ClientBuilder) CloseLogOutput() *ClientBuilder {
+	builder.openLogger = false
 	return builder
 }
 
@@ -190,11 +199,12 @@ func (builder *ClientBuilder) Build() (*client, error) {
 			Timeout:       builder.timeOut,
 			CheckRedirect: builder.checkRedirect,
 		},
-		header:        builder.header,
-		cookies:       builder.cookie,
-		buildResponse: builder.buildResponse,
-		loggerWriter:  builder.loggerWriter,
-		openLogger:    builder.openLogger,
+		header:         builder.header,
+		cookies:        builder.cookie,
+		buildResponse:  builder.buildResponse,
+		loggerWriter:   builder.loggerWriter,
+		openLogger:     builder.openLogger,
+		loggerFilePath: builder.logFilePath,
 	}
 
 	if builder.openJar {

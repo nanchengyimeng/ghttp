@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -36,8 +37,9 @@ type client struct {
 	//处理HTTP响应的Response
 	buildResponse BuildResponse
 
-	//加载日志处理
-	loggerWriter io.Writer
+	//加载日志处理，允许以目录设置文件输出，也允许以io.Writer为输出
+	loggerFilePath string
+	loggerWriter   io.Writer
 
 	// 日志开关
 	openLogger bool
@@ -352,7 +354,28 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 		return resp
 	}
 
-	logger := log.New(c.loggerWriter, "curl   ", log.LstdFlags)
+	var loggerWriter io.Writer
+	if len(c.loggerFilePath) != 0 {
+		//存在文件路径，走文件路径输出
+		var filePath strings.Builder
+		filePath.WriteString(c.loggerFilePath)
+		filePath.WriteByte('/')
+		filePath.WriteString(time.Now().Format("20060102"))
+		filePath.WriteString(".log")
+
+		file, err := os.OpenFile(filePath.String(), os.O_CREATE|os.O_APPEND, os.ModePerm)
+		if err != nil {
+			log.Println("打开日志文件失败: " + err.Error())
+			return resp
+		}
+
+		loggerWriter = file
+	} else {
+		//不存在文件路径，走流输出，默认os.Stdout
+		loggerWriter = c.loggerWriter
+	}
+
+	logger := log.New(loggerWriter, "curl   ", log.LstdFlags)
 
 	//统计请求耗时
 	startTime := ctx.Value("startTime").(time.Time)
