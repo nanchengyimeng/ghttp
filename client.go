@@ -341,7 +341,7 @@ func (c *client) buildStartTime(ctx context.Context) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	startTime := time.Now().UnixNano()
+	startTime := time.Now()
 	return context.WithValue(ctx, "startTime", startTime)
 }
 
@@ -353,12 +353,20 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 	}
 
 	logger := log.New(c.loggerWriter, "curl   ", log.LstdFlags)
-	startTime := ctx.Value("startTime").(int64)
-	passTime := time.Now().UnixNano() - startTime
+
+	//统计请求耗时
+	startTime := ctx.Value("startTime").(time.Time)
+	costTime := time.Since(startTime).String()
+
+	//请求错误处理
+	if resp.Error() != nil {
+		//远程服务异常时，不再记录日志，该异常交由调用方自行处理
+		return resp
+	}
 
 	header, _ := json.Marshal(resp.Request().Header)
 	if ctx == nil {
-		logger.Printf("\t%f\t%s\t%s\t%s\theader:%s\tparams:%s\tresponse:%s", float32(passTime)/1e6, c.uniqueId, resp.Request().Method, resp.Request().URL, string(header), "", string(resp.Content()))
+		logger.Printf("\t%s\t%s %s %s  header:%s\tparams:%s\tresponse:%s", costTime, c.uniqueId, resp.Request().Method, resp.Request().URL, string(header), "", string(resp.Content()))
 		return resp
 	}
 
@@ -368,6 +376,6 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 		bodyStr = body.(string)
 	}
 
-	logger.Printf("\t%f\t%s\t%s\t%s\theader:%s\tparams:%s\tresponse:%s", float32(passTime)/1e6, c.uniqueId, resp.Request().Method, resp.Request().URL, string(header), bodyStr, string(resp.Content()))
+	logger.Printf("\t%s\t%s %s %s  header:%s\tparams:%s\tresponse:%s", costTime, c.uniqueId, resp.Request().Method, resp.Request().URL, string(header), bodyStr, string(resp.Content()))
 	return resp
 }
