@@ -61,6 +61,7 @@ func GGet(strUrl string, values map[string]string) string {
 }
 
 //构造一个简单的POST body
+//在form-data中，我没有允许一个值为数组的key，因为我觉得，这样好恶心，还不如直接调用json请求方式
 func GPostData(values map[string]string) url.Values {
 	if values == nil {
 		return nil
