@@ -103,6 +103,12 @@ func main() {
 	requestUrl = ghttp.GGet(requestUrl, params)
 	iResponse := client.Get(requestUrl)
 
+	//先判断请求是否成功请求，再去处理响应
+	if iResponse.Error() != nil {
+		fmt.Println(iResponse.Error())
+		return
+	}
+	
 	//获取响应的错误信息、状态码、内容、内容长度，此外iResponse还封装了cookie信息、header信息、响应的Request、响应的Response
 	fmt.Println(iResponse.Error(), iResponse.StatusCode(), iResponse.Content(), iResponse.ContentLength())
 }
@@ -151,6 +157,11 @@ func main() {
 	wg.Add(1)
 	err = client.PostFormAsyn(requestUrl, data, func(response ghttp.IResponse) {
 		defer wg.Done()
+		//先判断请求是否成功请求，再去处理响应
+		if response.Error() != nil {
+			fmt.Println(response.Error())
+			return
+		}
 		fmt.Println(response.StatusCode())
 	})
 	if err != nil {
