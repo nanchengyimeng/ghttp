@@ -21,7 +21,7 @@ func NewClientBuilder() *ClientBuilder {
 		openJar:       false,
 		buildResponse: DefaultBuildResponse,
 		loggerWriter:  os.Stdout,
-		openLogger:    true,
+		debugMode:     false,
 	}
 }
 
@@ -68,8 +68,8 @@ type ClientBuilder struct {
 	//日志写入io, 默认stdout
 	loggerWriter io.Writer
 
-	// 日志开关
-	openLogger bool
+	// 调试开关
+	debugMode bool
 }
 
 func (builder *ClientBuilder) SetTimeOut(t time.Duration) *ClientBuilder {
@@ -134,9 +134,9 @@ func (builder *ClientBuilder) SetLogFilePath(path string) *ClientBuilder {
 	return builder
 }
 
-// 关闭日志输出
-func (builder *ClientBuilder) CloseLogOutput() *ClientBuilder {
-	builder.openLogger = false
+// 关闭控制台日志输出
+func (builder *ClientBuilder) Debug() *ClientBuilder {
+	builder.debugMode = true
 	return builder
 }
 
@@ -203,7 +203,7 @@ func (builder *ClientBuilder) Build() (*client, error) {
 		cookies:        builder.cookie,
 		buildResponse:  builder.buildResponse,
 		loggerWriter:   builder.loggerWriter,
-		openLogger:     builder.openLogger,
+		debugMode:      builder.debugMode,
 		loggerFilePath: builder.logFilePath,
 	}
 

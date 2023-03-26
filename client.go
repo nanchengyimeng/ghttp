@@ -41,45 +41,45 @@ type client struct {
 	loggerFilePath string
 	loggerWriter   io.Writer
 
-	// 日志开关
-	openLogger bool
+	// 调试开关
+	debugMode bool
 
 	// 请求唯一id
 	uniqueId string
 }
 
-//临时header设置，仅本次请求生效
+// 临时header设置，仅本次请求生效
 func (c *client) HeaderCache(header map[string]string) *client {
 	c._header = header
 	return c
 }
 
-//追加请求头，全生命周期有效
+// 追加请求头，全生命周期有效
 func (c *client) AddHeader(header map[string]string) {
 	for k, v := range header {
 		c.header[k] = v
 	}
 }
 
-//重置请求头，全生命周期有效
+// 重置请求头，全生命周期有效
 func (c *client) SetHeader(header map[string]string) {
 	c.header = header
 }
 
-//临时cookie设置，仅本次请求有效效
+// 临时cookie设置，仅本次请求有效效
 func (c *client) CookiesCache(cookies []*http.Cookie) *client {
 	c._cookies = cookies
 	return c
 }
 
-//追加cookie，全生命周期有效
+// 追加cookie，全生命周期有效
 func (c *client) AddCookies(cookies []*http.Cookie) {
 	for _, cookie := range cookies {
 		c.cookies = append(c.cookies, cookie)
 	}
 }
 
-//重设cookie，全生命周期有效
+// 重设cookie，全生命周期有效
 func (c *client) SetCookies(cookies []*http.Cookie) {
 	c.cookies = cookies
 }
@@ -89,7 +89,7 @@ func (c *client) SetUniqueId(id string) {
 	c.uniqueId = id
 }
 
-//初始化一个request
+// 初始化一个request
 func (c *client) getRequest(method, url string, body io.Reader) (*http.Request, error) {
 	request, err := http.NewRequest(method, url, body)
 	if err != nil {
@@ -119,7 +119,7 @@ func (c *client) getRequest(method, url string, body io.Reader) (*http.Request, 
 	return request, nil
 }
 
-//封装http请求
+// 封装http请求
 func (c *client) doRequest(ctx context.Context, r *http.Request) (context.Context, *http.Response, error) {
 	// 记录请求开始时间
 	ctx = c.buildStartTime(ctx)
@@ -127,22 +127,22 @@ func (c *client) doRequest(ctx context.Context, r *http.Request) (context.Contex
 	return ctx, response, err
 }
 
-//POST请求中,处理request的函数
+// POST请求中,处理request的函数
 func setRequestPostFrom(r *http.Request) {
 	r.Header.Set("Content-Type", HTTP_CONTENT_TYPE_FROM_DATA)
 }
 
-//POST请求中,处理request的函数,设置`Content-Type` 为 json
+// POST请求中,处理request的函数,设置`Content-Type` 为 json
 func setRequestPostJson(r *http.Request) {
 	r.Header.Set("Content-Type", HTTP_CONTENT_TYPE_JSON)
 }
 
-//POST请求中,处理request的函数,设置`Content-Type` 为 xml
+// POST请求中,处理request的函数,设置`Content-Type` 为 xml
 func setRequestPostXml(r *http.Request) {
 	r.Header.Set("Content-Type", HTTP_CONTENT_TYPE_XML)
 }
 
-//常规发起http请求
+// 常规发起http请求
 func (c *client) sendWithMethod(ctx context.Context, method, url string, body io.Reader, setContentType ContentTypeFunc) IResponse {
 	request, err := c.getRequest(method, url, body)
 	if err != nil {
@@ -155,7 +155,7 @@ func (c *client) sendWithMethod(ctx context.Context, method, url string, body io
 	return c.logger(c.buildResponse(c.doRequest(ctx, request)))
 }
 
-//发起异步回调处理的请求
+// 发起异步回调处理的请求
 func (c *client) sendWithMethodCallback(ctx context.Context, method, url string, body io.Reader, setContentType ContentTypeFunc, callback func(response IResponse)) error {
 	request, err := c.getRequest(method, url, body)
 	if err != nil {
@@ -171,22 +171,22 @@ func (c *client) sendWithMethodCallback(ctx context.Context, method, url string,
 	return nil
 }
 
-//通用GET请求，可先使用GGET绑定参数，再调用此方法
+// 通用GET请求，可先使用GGET绑定参数，再调用此方法
 func (c *client) Get(url string) IResponse {
 	return c.sendWithMethod(nil, http.MethodGet, url, nil, nil)
 }
 
-//GET异步请求，使用回调函数
+// GET异步请求，使用回调函数
 func (c *client) GetAsync(url string, call func(response IResponse)) error {
 	return c.sendWithMethodCallback(nil, http.MethodGet, url, nil, nil, call)
 }
 
-//GET异步请求，使用回调接口
+// GET异步请求，使用回调接口
 func (c *client) GetAsyncWithCallback(url string, call ICallBack) error {
 	return c.GetAsync(url, call.ResponseCallback)
 }
 
-//post 的form请求
+// post 的form请求
 func (c *client) PostForm(url string, values url.Values) IResponse {
 	var reader io.Reader
 	var ctx context.Context
@@ -201,7 +201,7 @@ func (c *client) PostForm(url string, values url.Values) IResponse {
 	return c.sendWithMethod(ctx, http.MethodPost, url, reader, setRequestPostFrom)
 }
 
-//Post form 异步请求,使用回调函数
+// Post form 异步请求,使用回调函数
 func (c *client) PostFormAsyn(url string, values url.Values, call func(response IResponse)) error {
 	if call == nil {
 		return errors.New("callback function is nil")
@@ -216,12 +216,12 @@ func (c *client) PostFormAsyn(url string, values url.Values, call func(response 
 	return c.sendWithMethodCallback(ctx, http.MethodPost, url, reader, setRequestPostFrom, call)
 }
 
-//Post form 异步请求,使用接口回调
+// Post form 异步请求,使用接口回调
 func (c *client) PostFormAsynWithCallback(url string, values url.Values, call ICallBack) error {
 	return c.PostFormAsyn(url, values, call.ResponseCallback)
 }
 
-//post 的bytes请求
+// post 的bytes请求
 func (c *client) PostBytes(url string, value []byte, req func(request *http.Request)) IResponse {
 	if value == nil {
 		return c.logger(c.buildResponse(nil, nil, errors.New("PostBytes value is nil")))
@@ -231,7 +231,7 @@ func (c *client) PostBytes(url string, value []byte, req func(request *http.Requ
 	return c.sendWithMethod(ctx, http.MethodPost, url, reader, req)
 }
 
-//post 的bytes请求
+// post 的bytes请求
 func (c *client) PostBytesAsyn(url string, value []byte, req func(request *http.Request), call func(response IResponse)) error {
 	if call == nil {
 		return errors.New("callback function is nil")
@@ -246,7 +246,7 @@ func (c *client) PostBytesAsyn(url string, value []byte, req func(request *http.
 	return c.sendWithMethodCallback(ctx, http.MethodPost, url, reader, req, call)
 }
 
-//post 的json请求
+// post 的json请求
 func (c *client) PostJson(url string, value interface{}) IResponse {
 	if value == nil {
 		return c.logger(c.buildResponse(nil, nil, errors.New("PostJson value is nil")))
@@ -258,7 +258,7 @@ func (c *client) PostJson(url string, value interface{}) IResponse {
 	return c.PostBytes(url, by, setRequestPostJson)
 }
 
-//Post json 异步请求,使用回调函数
+// Post json 异步请求,使用回调函数
 func (c *client) PostJsonAsyn(url string, value interface{}, call func(response IResponse)) error {
 	if call == nil {
 		return errors.New("callback function is nil")
@@ -273,12 +273,12 @@ func (c *client) PostJsonAsyn(url string, value interface{}, call func(response 
 	return c.PostBytesAsyn(url, by, setRequestPostJson, call)
 }
 
-//Post json 异步请求,使用接口回调
+// Post json 异步请求,使用接口回调
 func (c *client) PostJsonAsynWithCallback(url string, values interface{}, call ICallBack) error {
 	return c.PostJsonAsyn(url, values, call.ResponseCallback)
 }
 
-//post 的xml请求
+// post 的xml请求
 func (c *client) PostXml(url string, value interface{}) IResponse {
 	if value == nil {
 		return c.logger(c.buildResponse(nil, nil, errors.New("PostJson value is nil")))
@@ -290,7 +290,7 @@ func (c *client) PostXml(url string, value interface{}) IResponse {
 	return c.PostBytes(url, by, setRequestPostXml)
 }
 
-//Post xml 异步请求,使用回调函数
+// Post xml 异步请求,使用回调函数
 func (c *client) PostXmlAsyn(url string, value interface{}, call func(response IResponse)) error {
 	if call == nil {
 		return errors.New("callback function is nil")
@@ -305,19 +305,19 @@ func (c *client) PostXmlAsyn(url string, value interface{}, call func(response I
 	return c.PostBytesAsyn(url, by, setRequestPostXml, call)
 }
 
-//Post xml 异步请求,使用接口回调
+// Post xml 异步请求,使用接口回调
 func (c *client) PostXmlAsynWithCallback(url string, values interface{}, call ICallBack) error {
 	return c.PostXmlAsyn(url, values, call.ResponseCallback)
 }
 
-//post 的multipart请求
+// post 的multipart请求
 func (c *client) PostMultipart(url string, body IMultipart) IResponse {
 	return c.sendWithMethod(nil, http.MethodPost, url, body, func(request *http.Request) {
 		request.Header.Set("Content-Type", body.ContentType())
 	})
 }
 
-//post 的multipart请求,使用回调函数
+// post 的multipart请求,使用回调函数
 func (c *client) PostMultipartAsyn(url string, body IMultipart, call func(response IResponse)) error {
 	if call == nil {
 		return errors.New("callback function is nil")
@@ -327,18 +327,18 @@ func (c *client) PostMultipartAsyn(url string, body IMultipart, call func(respon
 	}, call)
 }
 
-//post 的multipart请求,使用接口回调
+// post 的multipart请求,使用接口回调
 func (c *client) PostMultipartAsynWithCallback(url string, body IMultipart, call ICallBack) error {
 	return c.PostMultipartAsyn(url, body, call.ResponseCallback)
 }
 
-//设置请求上下文，用于日志记录
+// 设置请求上下文，用于日志记录
 func (c *client) buildContext(body string) context.Context {
 	ctx := context.Background()
 	return context.WithValue(ctx, "body", body)
 }
 
-//设置请求时间到ctx
+// 设置请求时间到ctx
 func (c *client) buildStartTime(ctx context.Context) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
@@ -349,12 +349,13 @@ func (c *client) buildStartTime(ctx context.Context) context.Context {
 
 // log记录
 func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
-	// 日志关闭不记录
-	if !c.openLogger {
+
+	//请求错误处理
+	if resp.Error() != nil {
+		//远程服务异常时，不再记录日志，该异常交由调用方自行处理
 		return resp
 	}
 
-	var loggerWriter io.Writer
 	if len(c.loggerFilePath) != 0 {
 		//存在文件路径，走文件路径输出
 		var filePath strings.Builder
@@ -369,28 +370,32 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 			return resp
 		}
 
-		loggerWriter = file
+		c.loggerWrite(file, ctx, resp)
+
+		//debug模式，同时启用控制台日志输出
+		if c.debugMode {
+			c.loggerWrite(c.loggerWriter, ctx, resp)
+		}
+
 	} else {
 		//不存在文件路径，走流输出，默认os.Stdout
-		loggerWriter = c.loggerWriter
+		c.loggerWrite(c.loggerWriter, ctx, resp)
 	}
 
+	return resp
+}
+
+func (c *client) loggerWrite(loggerWriter io.Writer, ctx context.Context, resp IResponse) {
 	logger := log.New(loggerWriter, "curl   ", log.LstdFlags)
 
 	//统计请求耗时
 	startTime := ctx.Value("startTime").(time.Time)
 	costTime := time.Since(startTime).String()
 
-	//请求错误处理
-	if resp.Error() != nil {
-		//远程服务异常时，不再记录日志，该异常交由调用方自行处理
-		return resp
-	}
-
 	header, _ := json.Marshal(resp.Request().Header)
 	if ctx == nil {
 		logger.Printf("\t%s\t%s %s %s  header:%s\tparams:%s\tresponse:%s", costTime, c.uniqueId, resp.Request().Method, resp.Request().URL, string(header), "", string(resp.Content()))
-		return resp
+		return
 	}
 
 	body := ctx.Value("body")
@@ -400,5 +405,4 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 	}
 
 	logger.Printf("\t%s\t%s %s %s  header:%s\tparams:%s\tresponse:%s", costTime, c.uniqueId, resp.Request().Method, resp.Request().URL, string(header), bodyStr, string(resp.Content()))
-	return resp
 }
