@@ -48,25 +48,25 @@ type client struct {
 	uniqueId string
 }
 
-// 临时header设置，仅本次请求生效
+// HeaderCache 临时header设置，仅本次请求生效
 func (c *client) HeaderCache(header map[string]string) *client {
 	c._header = header
 	return c
 }
 
-// 追加请求头，全生命周期有效
+// AddHeader 追加请求头，全生命周期有效
 func (c *client) AddHeader(header map[string]string) {
 	for k, v := range header {
 		c.header[k] = v
 	}
 }
 
-// 重置请求头，全生命周期有效
+// SetHeader 重置请求头，全生命周期有效
 func (c *client) SetHeader(header map[string]string) {
 	c.header = header
 }
 
-// 临时cookie设置，仅本次请求有效效
+// CookiesCache 临时cookie设置，仅本次请求有效效
 func (c *client) CookiesCache(cookies []*http.Cookie) *client {
 	c._cookies = cookies
 	return c
@@ -371,14 +371,10 @@ func (c *client) logger(ctx context.Context, resp IResponse) IResponse {
 		}
 
 		c.loggerWrite(file, ctx, resp)
+	}
 
-		//debug模式，同时启用控制台日志输出
-		if c.debugMode {
-			c.loggerWrite(c.loggerWriter, ctx, resp)
-		}
-
-	} else {
-		//不存在文件路径，走流输出，默认os.Stdout
+	//debug模式，同时启用控制台日志输出
+	if c.debugMode {
 		c.loggerWrite(c.loggerWriter, ctx, resp)
 	}
 
