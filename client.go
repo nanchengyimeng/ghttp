@@ -55,6 +55,7 @@ func (c *client) HeaderCache(header map[string]string) *client {
 }
 
 // AddHeader 追加请求头，全生命周期有效
+// 并发不安全
 func (c *client) AddHeader(header map[string]string) {
 	for k, v := range header {
 		c.header[k] = v
@@ -62,6 +63,7 @@ func (c *client) AddHeader(header map[string]string) {
 }
 
 // SetHeader 重置请求头，全生命周期有效
+// 并发不安全
 func (c *client) SetHeader(header map[string]string) {
 	c.header = header
 }
@@ -73,6 +75,7 @@ func (c *client) CookiesCache(cookies []*http.Cookie) *client {
 }
 
 // 追加cookie，全生命周期有效
+// 并发不安全
 func (c *client) AddCookies(cookies []*http.Cookie) {
 	for _, cookie := range cookies {
 		c.cookies = append(c.cookies, cookie)
@@ -80,6 +83,7 @@ func (c *client) AddCookies(cookies []*http.Cookie) {
 }
 
 // 重设cookie，全生命周期有效
+// 并发不安全
 func (c *client) SetCookies(cookies []*http.Cookie) {
 	c.cookies = cookies
 }
