@@ -48,47 +48,47 @@ type client struct {
 	uniqueId string
 }
 
-// HeaderCache 临时header设置，仅本次请求生效
-func (c *client) HeaderCache(header map[string]string) *client {
+// SetHeaderCache 临时header设置，仅本次请求生效
+func (c *client) SetHeaderCache(header map[string]string) *client {
 	c._header = header
 	return c
 }
 
-// AddHeader 追加请求头，全生命周期有效
+// AddGlobalHeader 追加请求头，全生命周期有效
 // 并发不安全
-func (c *client) AddHeader(header map[string]string) {
+func (c *client) AddGlobalHeader(header map[string]string) {
 	for k, v := range header {
 		c.header[k] = v
 	}
 }
 
-// SetHeader 重置请求头，全生命周期有效
+// ResetGlobalHeader 重置请求头，全生命周期有效
 // 并发不安全
-func (c *client) SetHeader(header map[string]string) {
+func (c *client) ResetGlobalHeader(header map[string]string) {
 	c.header = header
 }
 
-// CookiesCache 临时cookie设置，仅本次请求有效效
-func (c *client) CookiesCache(cookies []*http.Cookie) *client {
+// SetCookiesCache 临时cookie设置，仅本次请求有效效
+func (c *client) SetCookiesCache(cookies []*http.Cookie) *client {
 	c._cookies = cookies
 	return c
 }
 
-// 追加cookie，全生命周期有效
+// AddGlobalCookies 追加cookie，全生命周期有效
 // 并发不安全
-func (c *client) AddCookies(cookies []*http.Cookie) {
+func (c *client) AddGlobalCookies(cookies []*http.Cookie) {
 	for _, cookie := range cookies {
 		c.cookies = append(c.cookies, cookie)
 	}
 }
 
-// 重设cookie，全生命周期有效
+// ResetGlobalCookies 重设cookie，全生命周期有效
 // 并发不安全
-func (c *client) SetCookies(cookies []*http.Cookie) {
+func (c *client) ResetGlobalCookies(cookies []*http.Cookie) {
 	c.cookies = cookies
 }
 
-// 设置请求的uniqueId
+// SetUniqueId 设置请求的uniqueId
 func (c *client) SetUniqueId(id string) {
 	c.uniqueId = id
 }
