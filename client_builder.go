@@ -130,6 +130,9 @@ func (builder *ClientBuilder) SetLoggerWriter(writer io.Writer) *ClientBuilder {
 
 // 关闭日志输出
 func (builder *ClientBuilder) SetLogFilePath(path string) *ClientBuilder {
+	if _, err := os.Stat(path); err != nil {
+		os.MkdirAll(path, 0711)
+	}
 	builder.logFilePath = path
 	return builder
 }
